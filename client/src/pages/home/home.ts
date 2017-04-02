@@ -15,7 +15,7 @@ export class HomePage {
   }
 
   login() {
-    // TODO
+    // TODO: Login isn't really going to be the home page
     localStorage.setItem("username", this.username);
     this.navCtrl.push(GamePage);
   }

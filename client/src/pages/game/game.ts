@@ -21,7 +21,8 @@ export class GamePage implements OnInit, OnDestroy {
     }
 
     chatting: boolean = false;
-    gameMapId: string = "testmap"; // TODO
+    // TODO: hard-coded, figure out how to handle map selection, etc.
+    gameMapId: string = "testmap"; 
     gameMap: any;
     messageSubscription: Subscription;
     playerUpdateSubscription: Subscription;
@@ -29,9 +30,9 @@ export class GamePage implements OnInit, OnDestroy {
     chatText: string;
 
     constructor(public navCtrl: NavController,
-        private platform: Platform,
-        private mapService: MapService,
-        public toastController: ToastController) {
+                private platform: Platform,
+                private mapService: MapService,
+                public toastController: ToastController) {
 
         this.platform.ready().then(() => {
             if (platform.is('cordova')) {
@@ -40,6 +41,36 @@ export class GamePage implements OnInit, OnDestroy {
         });
     }
 
+    ngOnInit(): void {
+        // TODO: algorithm to decide what to load for game assets...
+        // For now this is getting map metadata every time the game loads.
+        // Would be cool to download whatever isn't cached. If that's too much data,
+        // maybe download partial assets depending on player location to preload closest items
+        this.mapService.getMap(this.gameMapId).subscribe(
+            (value) => this.gameMap = value,
+            (error) => this.handerError(error));
+
+        this.handleMessages();
+        this.handlePlayerUpdates();
+        this.turnOnAutoScroll();
+    }
+
+    /** Subscribes to and handles general messages (such as chats, alerts, notifications) from the server */
+    handleMessages() {
+        this.messageSubscription = this.mapService.getMessages().subscribe(message => {
+            this.messages.push(message);
+        });
+    }
+
+    /** Subscribes to and handles player status changes from the server */
+    handlePlayerUpdates() {
+        this.playerUpdateSubscription = this.mapService.getPlayerUpdates().subscribe(message => {
+            //this.toastController.create({ message: JSON.stringify(message), duration: 3000 }).present();
+            console.log(message);
+        });
+    }
+
+    /** Setup to enable the user to type a message */
     setChatMode() {
         this.chatting = true;
         setTimeout(() => {
@@ -47,6 +78,7 @@ export class GamePage implements OnInit, OnDestroy {
         }, 150);
     }
 
+    /** The user entered a message. Process the message. */
     processChatText() {
         this.chatting = false;
 
@@ -56,32 +88,14 @@ export class GamePage implements OnInit, OnDestroy {
         this.chatText = "";
     }
 
-    ngOnInit(): void {
-        this.mapService.getMap(this.gameMapId).subscribe(
-            (value) => this.gameMap = value,
-            (error) => this.handerError(error));
-
-        this.handleMessages();
-        this.handlePlayerUpdates();
-
+    /** LAME: auto scroll the messages every 1/2 second */
+    turnOnAutoScroll() {
         setInterval(() => {
             this.messageReceiverControl.nativeElement.scrollTop = this.messageReceiverControl.nativeElement.scrollHeight;
         }, 500);
     }
 
-    handleMessages() {
-        this.messageSubscription = this.mapService.getMessages().subscribe(message => {
-            this.messages.push(message);
-        });
-    }
-
-    handlePlayerUpdates() {
-        this.playerUpdateSubscription = this.mapService.getPlayerLocations().subscribe(message => {
-            //this.toastController.create({ message: JSON.stringify(message), duration: 3000 }).present();
-            console.log(message);
-        });
-    }
-
+    /** Determines font color for a message based on the message type */
     getColorForMessageType(type: string) {
         if (type == "alert") {
             return "red";
@@ -92,6 +106,7 @@ export class GamePage implements OnInit, OnDestroy {
         return "black";
     }
 
+    /** Process errors in a standard way (console, toast, etc.) */
     handerError(error: any) {
         console.error(error);
         let message = error instanceof Error ? error.message : error;
@@ -109,5 +124,6 @@ export class GamePage implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.messageSubscription.unsubscribe();
+        this.playerUpdateSubscription.unsubscribe();
     }
 }
