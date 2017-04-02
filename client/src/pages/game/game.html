@@ -1,12 +1,96 @@
-<ion-content padding>
-    <p>asdfasdf asdf asdfasdf </p>
+<!--
+<ion-content scroll="false">
+
+  <div style="width: 100%; height:70%; position: relative">
+    <img src="http://localhost:8000/mock/testmap/tiles/sq10x19y0zN.png" width="100%" height="100%" style="z-index: 0" />
+    <img src="http://localhost:8000/mock/testmap/banana.gif" height="20%" width="15%" style="position: absolute; left: 40%; top: 50%; z-index: 10"
+    />
+  </div>
+
+  <div style="width: 100%; height: 29%; margin-top: 1%">
+
+      <ion-grid>
+        <ion-row>
+          <ion-col col-12>
+            <div style="height: 70%; overflow-y: scroll; overflow-x: hidden">
+            <div *ngFor="let message of messages">
+              {{message}}
+            </div>
+          </div>
+          </ion-col>
+        </ion-row>
+
+        <ion-row>
+          <ion-col col-10>
+            <div style="border: 1px solid black">
+              <ion-input type="text" placeholder="Chat message or command..."></ion-input>
+            </div>
+          </ion-col>
+          <ion-col col-2>
+            <button ion-button>Send</button>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+  </div>
+
+
   <ion-fab right bottom>
     <button ion-fab mini color="dark"><ion-icon name="arrow-dropleft"></ion-icon></button>
     <ion-fab-list side="left">
-      <button ion-fab (click)="share('fb')"><ion-icon name="logo-facebook"></ion-icon></button>
-      <button ion-fab (click)="share('tw')"><ion-icon name="logo-twitter"></ion-icon></button>
-      <button ion-fab (click)="share('vm')"><ion-icon name="logo-vimeo"></ion-icon></button>
-      <button ion-fab (click)="share('gg')"><ion-icon name="logo-googleplus"></ion-icon></button>
+      <button ion-fab><ion-icon name="logo-facebook"></ion-icon></button>
+      <button ion-fab><ion-icon name="logo-twitter"></ion-icon></button>
+      <button ion-fab><ion-icon name="logo-vimeo"></ion-icon></button>
+      <button ion-fab><ion-icon name="logo-googleplus"></ion-icon></button>
+    </ion-fab-list>
+  </ion-fab>
+</ion-content>
+!-->
+
+<ion-content class="game">
+  <div style="display: none; z-index: 1; position: absolute; color: black; font-weight: bold; left: 150px; top: 0px;">
+      Score
+  </div>
+
+  <ion-grid class="game-grid">
+    <ion-row class="game-display" [style.flex]="chatting ? 2 : 3">
+      <ion-col>
+        <div style="width: 100%; height:100%; position: relative">
+          <img src="http://localhost:3000/mock/testmap/tiles/sq10x19y0zN.png" width="100%" height="100%" style="z-index: 0" />
+          <img src="http://localhost:3000/mock/testmap/banana.gif" height="20%" width="15%" style="position: absolute; left: 40%; top: 70%; z-index: 10"
+          />
+        </div>
+      </ion-col>
+    </ion-row>
+    <ion-row class="game-messages">
+      <ion-col #messageReceiver style="overflow: scroll">
+        
+        <div *ngFor="let message of messages" style="margin: 5px" [hidden]="chatting">
+          <span *ngIf="message.type != 'chat'" [style.color]="getColorForMessageType(message.type)">
+            [{{ message.time | date:'mediumTime' }}] {{ message.text }}
+          </span>
+          <span *ngIf="message.type == 'chat'">
+            [{{ message.time | date:'mediumTime' }}] {{ message.from }}: {{ message.text }}
+          </span>
+        </div>
+        
+        <div style="overflow: hidden; border: 1px solid black; padding: 5px" [hidden]="!chatting">
+          <form (ngSubmit)="processChatText()">
+            <ion-input name="chatText" #chatInput [(ngModel)]="chatText" type="text" placeholder="Chat message or command..."></ion-input>
+            <button ion-button color="dark" small type="submit">Send</button>
+            <button ion-button color="light" small (click)="chatting = false">Cancel</button>
+          </form>
+        </div>
+
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <ion-fab right bottom [hidden]="chatting">
+    <button ion-fab mini color="dark"><ion-icon name="arrow-dropleft"></ion-icon></button>
+    <ion-fab-list side="left">
+      <button ion-fab (click)="setChatMode()"><ion-icon name="chatboxes"></ion-icon></button>
+      <button ion-fab><ion-icon name="body"></ion-icon></button>
     </ion-fab-list>
   </ion-fab>
 </ion-content>

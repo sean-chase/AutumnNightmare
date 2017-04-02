@@ -1,0 +1,25 @@
+.game {
+ 
+    scroll-content {
+        display: flex;
+        flex-direction: column;
+    }
+ 
+    .game-grid {
+        padding: 0;
+        height: 100%;
+    }
+ 
+    ion-col {
+        padding: 0px;
+    } 
+
+    .game-display {
+        flex: 3;
+    }
+
+    .game-messages {
+        flex: 1;
+    }
+
+}

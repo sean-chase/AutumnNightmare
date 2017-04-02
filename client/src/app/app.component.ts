@@ -3,12 +3,14 @@ import { Platform } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { HomePage } from '../pages/home/home';
+//import { GamePage } from '../pages/game/game';
 
 
 @Component({
   templateUrl: 'app.html'
 })
 export class AutumnNightmareApp {
+  //rootPage = HomePage;
   rootPage = HomePage;
 
   constructor(platform: Platform, statusBar: StatusBar, splashScreen: SplashScreen) {
