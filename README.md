@@ -1,1 +1,2 @@
 # Autumn Nightmare
+A very simple game using X, Y, Z coordinates with N/S/E/W (and overhead) direction like an old MUD game. Front end is Angular 2 using Ionic 2 with mobile in mind. Backend is NodeJS using Socket IO. Eventually want to support adding more maps, handling multiple instances of games, etc. For now, just keeping it simple. Also, the graphics up there are just crappy placeholders I made in PowerPoint because...lol?
