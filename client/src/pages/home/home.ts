@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
-import { GamePage } from '../game/game';
+import { LobbyPage } from '../lobby/lobby';
 
 @Component({
   selector: 'page-home',
@@ -17,7 +17,7 @@ export class HomePage {
   login() {
     // TODO: Login isn't really going to be the home page
     localStorage.setItem("username", this.username);
-    this.navCtrl.push(GamePage);
+    this.navCtrl.push(LobbyPage);
   }
 
 }

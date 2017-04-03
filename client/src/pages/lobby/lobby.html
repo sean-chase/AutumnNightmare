@@ -1,0 +1,31 @@
+<ion-content padding>
+    <form #lobbyForm="ngForm" (ngSubmit)="go(lobbyForm)" novalidate>
+        <ion-list>
+            <ion-item>
+                <ion-label>Select a map</ion-label>
+                <ion-select name="map" [(ngModel)]="map" title="Select a map">
+                    <ion-option *ngFor="let map of maps" checked="true" value="{{map.value}}">{{map.text}}</ion-option>
+                </ion-select>
+            </ion-item>
+
+            <ion-item>
+                
+            </ion-item>
+
+
+            <ion-item>
+                <ion-label>Join a game</ion-label>
+                <ion-select [disabled]="!instances.length" name="instance" [(ngModel)]="instance" title="Join a game">
+                    <ion-option *ngFor="let instance of instances" value="{{instance.value}}">{{instance.text}}</ion-option>
+                </ion-select>
+            </ion-item>
+            <ion-item>
+                <ion-label *ngIf="!instances.length">(No existing game instances found to join.)</ion-label>
+            </ion-item>
+        </ion-list>
+
+        <div padding>
+            <button ion-button color="primary">Go</button>
+        </div>
+    </form>
+</ion-content>

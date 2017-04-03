@@ -22,7 +22,8 @@ export class GamePage implements OnInit, OnDestroy {
 
     chatting: boolean = false;
     // TODO: hard-coded, figure out how to handle map selection, etc.
-    gameMapId: string = "testmap"; 
+    gameMapId: string = localStorage.getItem("map"); 
+    instanceId: string = localStorage.getItem("instance");
     gameMap: any;
     messageSubscription: Subscription;
     playerUpdateSubscription: Subscription;
@@ -42,6 +43,18 @@ export class GamePage implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        this.mapService.joinGame(this.gameMapId, this.instanceId).subscribe(
+            (result) => this.joinGameComplete(<string>result.map, <string>result.instance),
+            (error) => this.handerError(error));
+    }
+
+    /** Callback from joining a game instance (either existing instance, or new) */
+    joinGameComplete(gameMapId: string, instanceId: string) {
+        this.gameMapId = gameMapId;
+        localStorage.setItem("map", gameMapId); 
+        this.instanceId = instanceId;
+        localStorage.setItem("instance", instanceId);
+
         // TODO: algorithm to decide what to load for game assets...
         // For now this is getting map metadata every time the game loads.
         // Would be cool to download whatever isn't cached. If that's too much data,
