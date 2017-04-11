@@ -1,3 +1,52 @@
 {
-	"name": "Sean"
+	"clientGameData": {
+		"startLocation": { "x": 10, "y": 19, "z": 0, "direction": "N" },
+		"mobs": {
+			"1": {
+				"name": "Dancing Banana 1",
+				"hp": 100,
+				"img": "banana.gif"
+			},
+			"2": {
+				"name": "Blue Monster 1",
+				"hp": 100,
+				"img": "monstersinc.png"
+			},
+			"3": {
+				"name": "Blue Monster 2",
+				"hp": 100,
+				"img": "monstersinc.png"
+			},
+			"4": {
+				"name": "Dancing Banana 2",
+				"hp": 100,
+				"img": "banana.gif"
+			},
+			"5": {
+				"name": "Dancing Banana 3",
+				"hp": 100,
+				"img": "banana.gif"
+			},
+			"6": {
+				"name": "Dancing Banana 4",
+				"hp": 100,
+				"img": "banana.gif"
+			}
+		},
+		"map": {
+			"10,19,0,N": {
+				"N": {
+					"isPath": true,
+					"visibleMobs": [
+						{ "id": 1, "distance": 2 },
+						{ "id": 2, "distance": 2 },
+						{ "id": 3, "distance": 2 },
+						{ "id": 4, "distance": 1 },
+						{ "id": 5, "distance": 1 },
+						{ "id": 6, "distance": 1 }
+					]
+				}
+			}
+		}
+	}
 }

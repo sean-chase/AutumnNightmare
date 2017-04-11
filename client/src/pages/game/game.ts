@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, ViewChild, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, OnDestroy, HostListener, NgZone } from '@angular/core';
 import { NavController, Platform } from 'ionic-angular';
 import { MapService } from '../../services/map.service'
 import { ToastController } from 'ionic-angular';
@@ -21,19 +21,22 @@ export class GamePage implements OnInit, OnDestroy {
     }
 
     chatting: boolean = false;
-    // TODO: hard-coded, figure out how to handle map selection, etc.
     gameMapId: string = localStorage.getItem("map"); 
     instanceId: string = localStorage.getItem("instance");
-    gameMap: any;
+    username: string = localStorage.getItem("username");
     messageSubscription: Subscription;
     playerUpdateSubscription: Subscription;
     messages: any = [];
     chatText: string;
+    tile: string;
+    gameState: any;
+    mobs: any = [];
 
     constructor(public navCtrl: NavController,
                 private platform: Platform,
                 private mapService: MapService,
-                public toastController: ToastController) {
+                public toastController: ToastController,
+                private zone: NgZone) {
 
         this.platform.ready().then(() => {
             if (platform.is('cordova')) {
@@ -55,16 +58,8 @@ export class GamePage implements OnInit, OnDestroy {
         this.instanceId = instanceId;
         localStorage.setItem("instance", instanceId);
 
-        // TODO: algorithm to decide what to load for game assets...
-        // For now this is getting map metadata every time the game loads.
-        // Would be cool to download whatever isn't cached. If that's too much data,
-        // maybe download partial assets depending on player location to preload closest items
-        this.mapService.getMap(this.gameMapId).subscribe(
-            (value) => this.gameMap = value,
-            (error) => this.handerError(error));
-
         this.handleMessages();
-        this.handlePlayerUpdates();
+        this.handleGameStateUpdates();
         this.turnOnAutoScroll();
     }
 
@@ -75,12 +70,83 @@ export class GamePage implements OnInit, OnDestroy {
         });
     }
 
+    getMobImagePath(fileName: string): string {
+        return `${this.mapService.gameAssetLocation}/${this.gameMapId}/mobs/${fileName}`;
+    }
+
     /** Subscribes to and handles player status changes from the server */
-    handlePlayerUpdates() {
-        this.playerUpdateSubscription = this.mapService.getPlayerUpdates().subscribe(message => {
-            //this.toastController.create({ message: JSON.stringify(message), duration: 3000 }).present();
-            console.log(message);
+    handleGameStateUpdates() {
+        this.playerUpdateSubscription = this.mapService.getGameStateChanges().subscribe(gameState => {
+            //this.toastController.create({ message: JSON.stringify(gameState), duration: 3000 }).present();
+            this.gameState = gameState;
+            let location = gameState.players[this.username].location;
+            this.tile = `${this.mapService.gameAssetLocation}/${this.gameMapId}/tiles/sq${location.x}x${location.y}y${location.z}z${location.direction}.png`;
+            
+            let tileState = gameState["map"][`${location.x},${location.y},${location.z},${location.direction}`];
+
+            let directionState = tileState[location.direction];
+            if(directionState) {
+                let visibleMobs = directionState.visibleMobs;
+                if(visibleMobs) {
+                    visibleMobs.forEach((visibleMob, index, array) => {
+                        let mob = this.gameState.mobs[visibleMob.id];
+                        if(mob) {
+                            let copy = { ...mob };
+                            let distance = visibleMob.distance || 1;
+                            this.setMobPosition(copy, distance, array.length, index);
+                            copy.distance = distance;
+                            this.mobs.push(copy);
+                        }
+                    });
+                }
+            }
+            else {
+                this.mobs = [];
+            }
+
+            console.log(gameState);
         });
+    }
+
+    /** Set the mob styles based on the distance number and position based on number of mobs */
+    setMobPosition(mob: any, distance: number, numberOfMobs: number, index: number) {
+        if(!mob.style) {
+            mob.style = {};
+        }
+
+        let height = 50;
+        let width = 30;
+        if(distance == 2) {
+            height = 40;
+            width = 20;
+        }
+        else if(distance == 3) {
+            height = 36;
+            width = 26;
+        }
+        else if(distance == 4) {
+            height = 30;
+            width = 20;
+        }
+        else if(distance == 5) {
+            height = 20;
+            width = 10;
+        }
+        else if(distance >= 5) {
+            height = 10;
+            width = 6;
+        }
+        mob.style.height = `${height}%`;
+        mob.style.width = `${width}%`;
+
+        // Hack: if the number of mobs is too high, this will be untenable, but split into 3s, 
+        // design for rows of 3 if that's the case
+        let left = (50 - (.5 * (width * ((numberOfMobs % 4) + 1)))) + (width *  (index % 3));
+        mob.style.left = `${left}%`;
+
+        mob.style.top = "50%";
+        mob.style["z-index"] = (10 * (6 - distance)) + numberOfMobs - index;
+        mob.style["position"] = "absolute";
     }
 
     /** Setup to enable the user to type a message */

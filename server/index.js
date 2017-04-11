@@ -10,6 +10,7 @@ app.use('/maps', express.static('maps'));
 
 // TODO: in memory for dev/testing, haven't decided on a database yet. Probably Mongo
 var instances = {};
+var gameData = {};
 
 app.get('/maplist', function (req, res) {
   res.setHeader('Content-Type', 'application/json');
@@ -28,32 +29,34 @@ app.get('/instancelist', function (req, res) {
 });
 
 io.on('connection', (socket) => {
-
   socket.on("join", (name, map, instance) => {
     // Create a new instance if they are not joining an existing one.
     instance = instance || `${name}-${map}`
-    if (!instances[instance]) {
-      // TODO
-      instances[instance] = {
-        players: {}
-      };
+    let gameState = instances[instance];
+    if (!gameState) {
+      gameData[map] = require(`./maps/${map}/data.json`);
+      gameState = gameData[map].clientGameData;
+      
+      gameState.players = {};
+      instances[instance] = gameState;
     }
 
-    if (!instances[instance].players[name]) {
-      instances[instance].players[name] = {
+    // Add the player if it's not already added to the instance
+    if (!gameState.players[name]) {
+      gameState.players[name] = {
         name: name,
-        //location: { x: 0, y: 0, z: 0, direction: 'N' }
+        location: gameState.startLocation,
         socketid: socket.id
       };
     }
 
     socket.instance = instance;
-    socket.player = instances[instance].players[name];
+    socket.player = gameState.players[name];
     socket.join(instance);
     socket.emit('join-complete', { map: map, instance: instance });
 
     io.to(instance).emit('message', { type: 'notification', time: new Date(), from: 'Server', text: `${name} has joined the game.` });
-    io.to(instance).emit('update-players', instances[instance].players);
+    io.to(instance).emit('update-game-state', gameState);
   });
 
   socket.on('disconnect', () => {
@@ -63,7 +66,6 @@ io.on('connection', (socket) => {
       if (socket.player) {
         io.to(socket.instance).emit('message', { type: 'notification', time: new Date(), from: 'Server', text: `${socket.player.name} has left the game.` });
       }
-      io.to(socket.instance).emit("update-players", instance.players);
     }
   });
 

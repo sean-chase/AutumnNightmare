@@ -56,17 +56,6 @@ export class MapService  {
         return localStorage.getItem("username");
     }
 
-    /** Get data about the map to make subsequent requests for assets */
-    // TODO: this is going to change in a big way
-    getMap(gameMapId: string): Observable<any> {
-        return this.http.get(`${this.gameAssetLocation}/${gameMapId}/data.json`)
-            .map((res: Response) => {
-                console.log(res);
-                res.json();
-            })
-            .catch((error: any) => Observable.throw(error.json().error || 'Unexpected server error getting game map.'));
-    }
-
     /** Broadcast a user message to the server */
     sendMessage(message) {
         message.from = this.getUserName();
@@ -86,10 +75,10 @@ export class MapService  {
         return observable;
     }
 
-    /** Subscribe to player updates from the server */
-    getPlayerUpdates(): Observable<any> {
+    /** Subscribe to game state changes from the server */
+    getGameStateChanges(): Observable<any> {
         let observable = new Observable(observer => {
-            this.socket.on('update-players', (data) => {
+            this.socket.on('update-game-state', (data) => {
                 observer.next(data);
             });
             return () => {
