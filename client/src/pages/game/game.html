@@ -1,52 +1,3 @@
-<!--
-<ion-content scroll="false">
-
-  <div style="width: 100%; height:70%; position: relative">
-    <img src="http://localhost:8000/mock/testmap/tiles/sq10x19y0zN.png" width="100%" height="100%" style="z-index: 0" />
-    <img src="http://localhost:8000/mock/testmap/banana.gif" height="20%" width="15%" style="position: absolute; left: 40%; top: 50%; z-index: 10"
-    />
-  </div>
-
-  <div style="width: 100%; height: 29%; margin-top: 1%">
-
-      <ion-grid>
-        <ion-row>
-          <ion-col col-12>
-            <div style="height: 70%; overflow-y: scroll; overflow-x: hidden">
-            <div *ngFor="let message of messages">
-              {{message}}
-            </div>
-          </div>
-          </ion-col>
-        </ion-row>
-
-        <ion-row>
-          <ion-col col-10>
-            <div style="border: 1px solid black">
-              <ion-input type="text" placeholder="Chat message or command..."></ion-input>
-            </div>
-          </ion-col>
-          <ion-col col-2>
-            <button ion-button>Send</button>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-
-  </div>
-
-
-  <ion-fab right bottom>
-    <button ion-fab mini color="dark"><ion-icon name="arrow-dropleft"></ion-icon></button>
-    <ion-fab-list side="left">
-      <button ion-fab><ion-icon name="logo-facebook"></ion-icon></button>
-      <button ion-fab><ion-icon name="logo-twitter"></ion-icon></button>
-      <button ion-fab><ion-icon name="logo-vimeo"></ion-icon></button>
-      <button ion-fab><ion-icon name="logo-googleplus"></ion-icon></button>
-    </ion-fab-list>
-  </ion-fab>
-</ion-content>
-!-->
-
 <ion-content class="game">
   <div style="display: none; z-index: 1; position: absolute; color: black; font-weight: bold; left: 150px; top: 0px;">
       Score
@@ -55,11 +6,9 @@
   <ion-grid class="game-grid">
     <ion-row class="game-display" [style.flex]="chatting ? 2 : 3">
       <ion-col>
-        <div style="width: 100%; height:100%; position: relative">
-          
-          <img [src]="tile" style="z-index: 0; height: 100%; width: 100%" />
+        <div style="height: 100%">
+          <img [src]="tile" style="height: 100%; width: 100%; left: 0%; top: 0%; z-index: 0; position: absolute;">
           <img *ngFor="let mob of mobs" [src]="getMobImagePath(mob.img)" [ngStyle]="mob.style" />
-
         </div>
       </ion-col>
     </ion-row>
