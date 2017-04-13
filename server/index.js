@@ -4,9 +4,10 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const GameInstance = require('./gameInstance.js');
 
 app.use(cors());
-app.use('/maps', express.static('maps'));
+app.use('/maps', express.static(__dirname + "/maps"));
 
 // TODO: in memory for dev/testing, haven't decided on a database yet. Probably Mongo
 var instances = {};
@@ -31,32 +32,31 @@ app.get('/instancelist', function (req, res) {
 io.on('connection', (socket) => {
   socket.on("join", (name, map, instance) => {
     // Create a new instance if they are not joining an existing one.
-    instance = instance || `${name}-${map}`
-    let gameState = instances[instance];
-    if (!gameState) {
+    instance = instance || `${name}-${map}`;
+
+    let gameInstance = instances[instance];
+
+    if (!gameInstance) {
       gameData[map] = require(`./maps/${map}/data.json`);
-      gameState = gameData[map].clientGameData;
-      
-      gameState.players = {};
-      instances[instance] = gameState;
+      gameInstance = instances[instance] = new GameInstance(instance, gameData[map].clientGameData, io);
     }
 
     // Add the player if it's not already added to the instance
-    if (!gameState.players[name]) {
-      gameState.players[name] = {
+    if (!gameInstance.gameState.players[name]) {
+      gameInstance.gameState.players[name] = {
         name: name,
-        location: gameState.startLocation,
+        location: gameInstance.gameState.startLocation,
         socketid: socket.id
       };
     }
 
     socket.instance = instance;
-    socket.player = gameState.players[name];
+    socket.player = gameInstance.gameState.players[name];
     socket.join(instance);
     socket.emit('join-complete', { map: map, instance: instance });
 
     io.to(instance).emit('message', { type: 'notification', time: new Date(), from: 'Server', text: `${name} has joined the game.` });
-    io.to(instance).emit('update-game-state', gameState);
+    io.to(instance).emit('update-game-state', gameInstance.gameState);
   });
 
   socket.on('disconnect', () => {

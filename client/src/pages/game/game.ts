@@ -1,7 +1,7 @@
 import { Component, OnInit, ElementRef, ViewChild, OnDestroy, HostListener, NgZone } from '@angular/core';
 import { NavController, Platform } from 'ionic-angular';
 import { MapService } from '../../services/map.service'
-import { ToastController } from 'ionic-angular';
+import { ToastController, Toast, PopoverController } from 'ionic-angular';
 import { Subscription } from 'rxjs/Rx';
 
 @Component({
@@ -11,32 +11,35 @@ import { Subscription } from 'rxjs/Rx';
 export class GamePage implements OnInit, OnDestroy {
     @ViewChild('messageReceiver') private messageReceiverControl: ElementRef;
     @ViewChild('chatInput') chatInput;
-    @HostListener('document:keypress', ['$event']) 
-    handleKeyboardEvent(event: KeyboardEvent) {  
+    @HostListener('document:keypress', ['$event'])
+    handleKeyboardEvent(event: KeyboardEvent) {
         // Enter chat mode if they have a keyboard so they don't have
         // to click the button every time they want to type
-        if(!this.chatting && event.key == "Enter") {
+        if (!this.chatting && event.key == "Enter") {
             this.setChatMode();
         }
     }
 
     chatting: boolean = false;
-    gameMapId: string = localStorage.getItem("map"); 
+    gameMapId: string = localStorage.getItem("map");
     instanceId: string = localStorage.getItem("instance");
     username: string = localStorage.getItem("username");
     messageSubscription: Subscription;
     playerUpdateSubscription: Subscription;
+    gameTimerSubscription: Subscription;
     messages: any = [];
     chatText: string;
     tile: string;
     gameState: any;
     mobs: any = [];
+    timerToast: Toast;
 
     constructor(public navCtrl: NavController,
-                private platform: Platform,
-                private mapService: MapService,
-                public toastController: ToastController,
-                private zone: NgZone) {
+        private platform: Platform,
+        private mapService: MapService,
+        public toastController: ToastController,
+        private zone: NgZone,
+        private popoverController: PopoverController) {
 
         this.platform.ready().then(() => {
             if (platform.is('cordova')) {
@@ -54,12 +57,13 @@ export class GamePage implements OnInit, OnDestroy {
     /** Callback from joining a game instance (either existing instance, or new) */
     joinGameComplete(gameMapId: string, instanceId: string) {
         this.gameMapId = gameMapId;
-        localStorage.setItem("map", gameMapId); 
+        localStorage.setItem("map", gameMapId);
         this.instanceId = instanceId;
         localStorage.setItem("instance", instanceId);
 
         this.handleMessages();
         this.handleGameStateUpdates();
+        this.handleGameTimer();
         this.turnOnAutoScroll();
     }
 
@@ -81,16 +85,16 @@ export class GamePage implements OnInit, OnDestroy {
             this.gameState = gameState;
             let location = gameState.players[this.username].location;
             this.tile = `${this.mapService.gameAssetLocation}/${this.gameMapId}/tiles/sq${location.x}x${location.y}y${location.z}z${location.direction}.png`;
-            
+
             let tileState = gameState["map"][`${location.x},${location.y},${location.z},${location.direction}`];
 
             let directionState = tileState[location.direction];
-            if(directionState) {
+            if (directionState) {
                 let visibleMobs = directionState.visibleMobs;
-                if(visibleMobs) {
+                if (visibleMobs) {
                     visibleMobs.forEach((visibleMob, index, array) => {
                         let mob = this.gameState.mobs[visibleMob.id];
-                        if(mob) {
+                        if (mob) {
                             let copy = { ...mob };
                             let distance = visibleMob.distance || 1;
                             this.setMobPosition(copy, distance, array.length, index);
@@ -108,40 +112,65 @@ export class GamePage implements OnInit, OnDestroy {
         });
     }
 
+    handleGameTimer() {
+        this.gameTimerSubscription = this.mapService.getGameTimerSubscription().subscribe(timer => {
+            let seconds: number = (timer.max * 1000) - (timer.count * 1000);
+            let message = `${seconds / 1000} seconds to make your move.`;
+            if (!this.timerToast) {
+                this.timerToast = this.toastController.create({
+                    message: message,
+                    duration: seconds,
+                    position: 'top'
+                });
+                this.timerToast.onDidDismiss(() => this.timerToast = null);
+                this.timerToast.present(this.timerToast);
+            }
+            else {
+                this.timerToast.setMessage(message);
+            }
+        });
+    }
+
     /** Set the mob styles based on the distance number and position based on number of mobs */
     setMobPosition(mob: any, distance: number, numberOfMobs: number, index: number) {
-        if(!mob.style) {
+        if (!mob.style) {
             mob.style = {};
         }
 
         let height = 50;
         let width = 30;
-        if(distance == 2) {
+        if (distance == 2) {
             height = 40;
             width = 20;
         }
-        else if(distance == 3) {
+        else if (distance == 3) {
             height = 36;
             width = 26;
         }
-        else if(distance == 4) {
+        else if (distance == 4) {
             height = 30;
             width = 20;
         }
-        else if(distance == 5) {
+        else if (distance == 5) {
             height = 20;
             width = 10;
         }
-        else if(distance >= 5) {
+        else if (distance >= 5) {
             height = 10;
             width = 6;
         }
         mob.style.height = `${height}%`;
         mob.style.width = `${width}%`;
 
-        // Hack: if the number of mobs is too high, this will be untenable, but split into 3s, 
-        // design for rows of 3 if that's the case
-        let left = (50 - (.5 * (width * ((numberOfMobs % 4) + 1)))) + (width *  (index % 3));
+        // Positioning mobs: center 1 mob, split center 2 mobs, 
+        // and for 3 more more...try to group into sets of 3  ¯\_(ツ)_/¯ 
+        let left = (50 - (.5 * width));
+        if (numberOfMobs == 2) {
+            left = (50 - (.5 * width)) + ((width * .5) * (index == 0 ? -1 : 1));
+        }
+        else if (numberOfMobs > 2) {
+            left = (50 - (.5 * (width * ((numberOfMobs % 4) + 1)))) + (width * (index % 3));
+        }
         mob.style.left = `${left}%`;
 
         mob.style.top = "50%";
@@ -204,5 +233,6 @@ export class GamePage implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.messageSubscription.unsubscribe();
         this.playerUpdateSubscription.unsubscribe();
+        this.gameTimerSubscription.unsubscribe();
     }
 }

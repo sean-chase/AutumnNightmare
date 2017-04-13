@@ -38,12 +38,8 @@
 				"N": {
 					"isPath": true,
 					"visibleMobs": [
-						{ "id": 1, "distance": 2 },
-						{ "id": 2, "distance": 2 },
-						{ "id": 3, "distance": 2 },
-						{ "id": 4, "distance": 1 },
-						{ "id": 5, "distance": 1 },
-						{ "id": 6, "distance": 1 }
+						{ "id": 1, "distance": 5 },
+						{ "id": 2, "distance": 5 }
 					]
 				}
 			}

@@ -88,5 +88,17 @@ export class MapService  {
         return observable;
     }
 
+    /** Subscribe to game timer updates */
+    getGameTimerSubscription(): Observable<any> {
+       let observable = new Observable(observer => {
+            this.socket.on('game-timer', (data) => {
+                observer.next(data);
+            });
+            return () => {
+                this.socket.disconnect();
+            };
+        });
+        return observable;
+    }
     
 }
